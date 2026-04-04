@@ -15,67 +15,46 @@ function Signup(){
   const [location,setLocation] = useState("");
   const [income,setIncome] = useState("");
 
-  async function handleSignup(){
+ async function handleSignup(){
 
-    if(!name || !email || !password || !platform || !location || !income){
-      alert("Please fill all fields");
-      return;
-    }
-
-    try{
-
-      const res = await axios.post(
-  "https://guidewire-final.onrender.com/auth/signup",
-  {
-    name,
-    email,
-    password,
-    platform,
-    location,
-    weekly_income: Number(income)
+  if(!name || !email || !password || !platform || !location || !income){
+    setMessage("Please fill all fields ❌");
+    return;
   }
-);
 
-      console.log("Signup response:", res.data);
+  try{
 
-      // 🚨 CHECK TOKEN
-      if(!res.data.access_token){
-        alert("Token not received from server ❌");
-        return;
+    await axios.post(
+      "https://guidewire-final.onrender.com/auth/signup",
+      {
+        name,
+        email,
+        password,
+        platform,
+        location,
+        weekly_income: Number(income)
       }
+    );
 
-      // 🔥 SAVE TOKEN
-      localStorage.setItem("token", res.data.access_token);
+    // ✅ SUCCESS MESSAGE
+    setMessage("Signup Successful 🎉");
 
-      // 🔥 FETCH USER FROM BACKEND
-      const userRes = await axios.get(
-        "https://guidewire-final.onrender.com/auth/me",
-        {
-          headers: {
-            Authorization: `Bearer ${res.data.access_token}`
-          }
-        }
-      );
+    // 🔥 REDIRECT AFTER DELAY
+    setTimeout(() => {
+      navigate("/login");
+    }, 1500);
 
-      // 🔥 SAVE USER (ONLY ONCE)
-      localStorage.setItem("user", JSON.stringify(userRes.data));
+  }catch(err){
+    console.error("Signup error:", err);
 
-      alert("Signup Successful 🎉");
-
-      // ✅ FIXED REDIRECT
-      navigate("/payment-setup");
-
-    }catch(err){
-      console.error("Signup error:", err);
-
-      if(err.response){
-        setMessage(err.response.data.detail || "Signup failed ❌");
-      }else{
-        alert("Server not reachable ❌");
-      }
+    if(err.response){
+      setMessage(err.response.data.detail || "Signup failed ❌");
+    }else{
+      setMessage("Server not reachable ❌");
     }
-
   }
+
+}
 
   return(
 
@@ -167,6 +146,18 @@ function Signup(){
             value={income}
             onChange={(e)=>setIncome(e.target.value)}
           />
+          {message && (
+  <div style={{
+    background: message.includes("Successful") ? "#e6ffe6" : "#ffe6e6",
+    color: message.includes("Successful") ? "#2e7d32" : "#d8000c",
+    padding: "10px",
+    borderRadius: "6px",
+    marginBottom: "10px",
+    textAlign: "center"
+  }}>
+    {message}
+  </div>
+)}
 
           <button type="submit" className="btn-primary">
             Signup

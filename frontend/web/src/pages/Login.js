@@ -2,35 +2,39 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "../pages/AuthContext"; // adjust path if moved
+import { useAuth } from "../pages/AuthContext";
+
+const BASE_URL = "https://guidewire-final.onrender.com";
 
 function Login() {
 
   const navigate = useNavigate();
-  const { login } = useAuth(); // 🔥 use context
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
 
     if (!email || !password) {
-      setError("Please enter email and password");
+      setMessage("Please enter email and password ❌");
       return;
     }
 
     try {
       setLoading(true);
-      setError("");
+      setMessage("");
 
+      // 🔥 Prepare form data
       const formData = new URLSearchParams();
       formData.append("username", email);
       formData.append("password", password);
 
+      // 🔥 Login API
       const res = await axios.post(
-        "https://guidewire-final.onrender.com/auth/login",
+        `${BASE_URL}/auth/login`,
         formData,
         {
           headers: {
@@ -39,19 +43,42 @@ function Login() {
         }
       );
 
-      // 🔥 use context instead of localStorage directly
-      login(
-        {
-          name: res.data.user.name,
-          email: email
-        },
-        res.data.access_token
-      );
+      // 🚨 Token safety check
+      if (!res.data.access_token) {
+        setMessage("Login failed ❌");
+        return;
+      }
 
-      navigate("/dashboard");
+      let userData = { name: "User", email };
+
+      // 🔥 Fetch real user data (safe)
+      try {
+        const userRes = await axios.get(
+          `${BASE_URL}/auth/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${res.data.access_token}`
+            }
+          }
+        );
+        userData = userRes.data;
+      } catch {
+        console.warn("User fetch failed, using fallback");
+      }
+
+      // 🔥 Save in context
+      login(userData, res.data.access_token);
+
+      // ✅ Success message
+      setMessage("Login successful 🎉");
+
+      // 🚀 Redirect
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 800);
 
     } catch (err) {
-      setError("Invalid credentials ❌");
+      setMessage("Invalid credentials ❌");
     } finally {
       setLoading(false);
     }
@@ -85,16 +112,17 @@ function Login() {
           <h2 className="auth-title">Welcome Back</h2>
           <p className="muted">Login to continue</p>
 
-          {/* 🔥 ERROR MESSAGE */}
-          {error && (
+          {/* 🔥 MESSAGE */}
+          {message && (
             <div style={{
-              background: "#ffe6e6",
-              color: "#d8000c",
+              background: message.includes("successful") ? "#e6ffe6" : "#ffe6e6",
+              color: message.includes("successful") ? "#2e7d32" : "#d8000c",
               padding: "10px",
               borderRadius: "6px",
-              marginBottom: "10px"
+              marginBottom: "10px",
+              textAlign: "center"
             }}>
-              {error}
+              {message}
             </div>
           )}
 
