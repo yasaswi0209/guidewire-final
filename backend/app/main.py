@@ -1,6 +1,9 @@
 from fastapi.middleware.cors import CORSMiddleware
 
-
+origins = [
+    "http://localhost:3000",   # local frontend
+    "https://your-frontend.onrender.com"  # deployed frontend (later)
+]
 
 from fastapi import FastAPI
 app = FastAPI()
