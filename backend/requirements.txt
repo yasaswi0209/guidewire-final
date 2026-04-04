@@ -7,3 +7,4 @@ python-jose
 joblib
 python-multipart
 passlib[bcrypt]
+requests
