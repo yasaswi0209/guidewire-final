@@ -10,9 +10,7 @@ app = FastAPI()
 from app.db.session import engine, Base
 from app.models.user import User  # adjust import if needed
 
-# ⚠️ TEMP RESET
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
+
 
 # ✅ ROUTES
 try:
