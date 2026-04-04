@@ -16,10 +16,14 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # ✅ ENGINE WITH SSL (RENDER NEEDS THIS)
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"sslmode": "require"}
-)
+# ✅ ENGINE (SMART FIX)
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL)
+else:
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"sslmode": "require"}
+    )
 
 # ✅ SESSION
 SessionLocal = sessionmaker(
