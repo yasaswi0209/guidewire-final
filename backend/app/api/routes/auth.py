@@ -76,3 +76,36 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         "access_token": access_token,
         "token_type": "bearer"
     }
+# 👤 GET CURRENT USER
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+SECRET_KEY = "super-secret-key"   # ⚠️ SAME as used in create_access_token
+ALGORITHM = "HS256"
+
+@router.get("/me")
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {
+            "name": user.name,
+            "email": user.email,
+            "platform": user.platform,
+            "location": user.location,
+            "weekly_income": user.weekly_income
+        }
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
