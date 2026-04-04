@@ -18,7 +18,6 @@ app.add_middleware(
 # Include all routers
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(insurance.router)
-app.include_router(risk.router, prefix="/risk", tags=["Risk"])
 app.include_router(claim.router)
 app.include_router(payout.router, tags=["Payout"])
 app.include_router(settings.router)
