@@ -23,34 +23,37 @@ class UserCreate(BaseModel):
 # 🔐 SIGNUP
 @router.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
+    try:
+        existing_user = db.query(User).filter(User.email == user.email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User already exists")
 
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
+        new_user = User(
+            name=user.name,
+            email=user.email,
+            password=hash_password(user.password),
+            platform=user.platform,
+            location=user.location,
+            weekly_income=int(user.weekly_income)  # 🔥 FIX
+        )
 
-    new_user = User(
-        name=user.name,
-        email=user.email,
-        password=hash_password(user.password),
-        platform=user.platform,
-        location=user.location,
-        weekly_income=user.weekly_income
-    )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+        access_token = create_access_token(
+            {"sub": new_user.email},
+            timedelta(hours=24)
+        )
 
-    access_token = create_access_token(
-        {"sub": new_user.email},
-        timedelta(hours=24)
-    )
+        return {
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
-
+    except Exception as e:
+        print("🔥 SIGNUP ERROR:", str(e))
+        raise HTTPException(status_code=500, detail="Signup failed")
 
 # 🔐 LOGIN
 @router.post("/login")
