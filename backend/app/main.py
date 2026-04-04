@@ -1,35 +1,16 @@
-print("🔥 STEP 0 - MAIN START")
-
 from fastapi import FastAPI
+
+from app.api.routes import risk, claim, payout, settings, auth, insurance
+from app.db.session import engine
+
 app = FastAPI()
 
-# ✅ SAFE IMPORTS
-try:
-    print("🔥 STEP 1 - Importing routes")
-    from app.api.routes import risk, claim, payout, settings, auth, insurance
-    print("✅ Routes imported")
-except Exception as e:
-    print("❌ ROUTE IMPORT ERROR:", e)
-
-# ✅ SAFE DB IMPORT
-try:
-    print("🔥 STEP 2 - Importing DB")
-    from app.db.session import engine
-    print("✅ DB imported")
-except Exception as e:
-    print("❌ DB ERROR:", e)
-
-# ✅ ROUTER ATTACH
-try:
-    print("🔥 STEP 3 - Attaching routes")
-    app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-    app.include_router(risk.router, prefix="/risk", tags=["Risk"])
-    app.include_router(claim.router)
-    app.include_router(payout.router, tags=["Payout"])
-    app.include_router(settings.router)
-    print("✅ Routes attached")
-except Exception as e:
-    print("❌ ROUTER ATTACH ERROR:", e)
+# ✅ Attach routers
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(risk.router, prefix="/risk", tags=["Risk"])
+app.include_router(claim.router)
+app.include_router(payout.router, tags=["Payout"])
+app.include_router(settings.router)
 
 @app.get("/")
 def root():
