@@ -92,7 +92,7 @@ function PaymentSetup(){
     }
 
     await axios.post(
-      "http://127.0.0.1:8000/settings/save",
+      "https://guidewire-final.onrender.com/settings/save",
       {
         phone,
         upi,

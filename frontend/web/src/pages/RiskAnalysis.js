@@ -67,7 +67,7 @@ useEffect(() => {
     const city = user?.city || "Hyderabad";
 
       const res = await axios.get(
-        `http://127.0.0.1:8000/claims/weather/${city}`
+        `https://guidewire-final.onrender.com/claims/weather/${city}`
       );
 
       const data = res.data;
@@ -123,7 +123,7 @@ async function calculateRisk(){
 
   try {
     const res = await axios.post(
-      "http://127.0.0.1:8000/claims/risk",
+      "https://guidewire-final.onrender.com/claims/risk",
       {
         weather: weather,
         aqi: Number(pollution)

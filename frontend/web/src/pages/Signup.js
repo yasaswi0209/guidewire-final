@@ -25,16 +25,16 @@ function Signup(){
     try{
 
       const res = await axios.post(
-        "http://localhost:8000/auth/signup",
-        {
-          name,
-          email,
-          password,
-          platform,
-          location,
-          weekly_income: Number(income)
-        }
-      );
+  "https://guidewire-final.onrender.com/auth/signup",
+  {
+    name,
+    email,
+    password,
+    platform,
+    location,
+    weekly_income: Number(income)
+  }
+);
 
       console.log("Signup response:", res.data);
 
@@ -49,7 +49,7 @@ function Signup(){
 
       // 🔥 FETCH USER FROM BACKEND
       const userRes = await axios.get(
-        "http://127.0.0.1:8000/auth/me",
+        "https://guidewire-final.onrender.com/auth/me",
         {
           headers: {
             Authorization: `Bearer ${res.data.access_token}`

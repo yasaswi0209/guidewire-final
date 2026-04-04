@@ -38,7 +38,7 @@ function Policy(){
       const token = localStorage.getItem("token");
 
       const res = await axios.post(
-        "http://127.0.0.1:8000/claims/auto",
+        "https://guidewire-final.onrender.com/claims/auto",
         { reason: reasonText },
         {
           headers:{
@@ -67,7 +67,7 @@ function Policy(){
         }
 
         const res = await axios.get(
-          "http://127.0.0.1:8000/risk/",
+          "https://guidewire-final.onrender.com/risk/",
           {
             headers:{
               Authorization: `Bearer ${token}`
@@ -126,7 +126,7 @@ function Policy(){
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        "http://127.0.0.1:8000/insurance/me",
+        "https://guidewire-final.onrender.com/insurance/me",
         {
           headers:{
             Authorization: `Bearer ${token}`
@@ -249,7 +249,7 @@ useEffect(() => {
     const token = localStorage.getItem("token");
 
     const res = await axios.post(
-      "http://127.0.0.1:8000/insurance/upgrade",
+      "https://guidewire-final.onrender.com/insurance/upgrade",
       null,
       {
         params: {

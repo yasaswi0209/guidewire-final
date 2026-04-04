@@ -72,7 +72,7 @@ useEffect(() => {
 const user = JSON.parse(localStorage.getItem("user"));
 
 if(user?.id){
-axios.get(`http://127.0.0.1:8000/settings/${user.id}`)
+axios.get(`https://guidewire-final.onrender.com/settings/${user.id}`)
 .then(res => setUserPayment(res.data))
 .catch(err => console.error(err));
 }
@@ -81,7 +81,7 @@ axios.get(`http://127.0.0.1:8000/settings/${user.id}`)
 
 // 🔥 FETCH RECENT CLAIMS (FIXED)
 useEffect(() => {
-axios.get("http://127.0.0.1:8000/claims/recent")
+axios.get("https://guidewire-final.onrender.com/claims/recent")
 .then(res => setRecentClaims(res.data))
 .catch(err => console.error(err));
 }, []);
@@ -104,11 +104,11 @@ const city = localStorage.getItem("city") || "Hyderabad";
 
 // 🌦️ GET LIVE WEATHER
 const weatherRes = await axios.get(
-  `http://127.0.0.1:8000/claims/weather/${city}`
+  `https://guidewire-final.onrender.com/claims/weather/${city}`
 );
 
 // 🚀 AUTO CLAIM
-const res = await axios.post("http://127.0.0.1:8000/claims/auto", {
+const res = await axios.post("https://guidewire-final.onrender.com/claims/auto", {
   user_id: user?.id,
   city: city,
   trigger: selected
