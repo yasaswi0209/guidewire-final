@@ -17,3 +17,11 @@ def upgrade_plan(plan: str):
     return {
         "message": f"{plan} plan activated 🎉"
     }
+from sqlalchemy import Column, Integer, String
+from app.db.session import Base
+
+class Insurance(Base):
+    __tablename__ = "insurance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan = Column(String)
