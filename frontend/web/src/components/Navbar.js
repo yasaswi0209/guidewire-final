@@ -1,28 +1,66 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 
 function Navbar(){
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-let user = null;
+  const [open,setOpen] = useState(false);
 
-try {
-  user = JSON.parse(localStorage.getItem("user"));
-} catch (err) {
-  user = null;
-}
+  const menuRef = useRef();
+
+  let userName = null;
+
+  try{
+
+    const storedUser = localStorage.getItem("user");
+
+    if(storedUser){
+
+      const parsed = JSON.parse(storedUser);
+
+      userName = parsed.name;
+
+    }
+
+  }catch{
+    console.log("Invalid user JSON");
+  }
 
 
-function logout(){
+  function logout(){
 
-localStorage.removeItem("user");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
 
-navigate("/");
+    navigate("/");
 
-}
+  }
 
 
-return(
+  /* close dropdown when clicking outside */
+
+  useEffect(()=>{
+
+    function handleClick(e){
+
+      if(menuRef.current && !menuRef.current.contains(e.target)){
+
+        setOpen(false);
+
+      }
+
+    }
+
+    document.addEventListener("click",handleClick);
+
+    return ()=>document.removeEventListener("click",handleClick);
+
+  },[]);
+
+
+
+  return(
 
 <header id="main-nav">
 
@@ -37,9 +75,7 @@ onClick={()=>navigate("/")}
 >
 
 <span className="logo-text">
-
-GeekShield <span className="logo-ai">AI</span>
-
+  Zensure<span className="logo-x">X</span>
 </span>
 
 </div>
@@ -48,10 +84,7 @@ GeekShield <span className="logo-ai">AI</span>
 
 {/* LINKS */}
 
-<nav>
-
 <ul className="nav-links">
-
 
 <li>
 
@@ -139,8 +172,6 @@ Risk Analysis
 
 </ul>
 
-</nav>
-
 
 
 {/* RIGHT SIDE */}
@@ -148,34 +179,57 @@ Risk Analysis
 <div className="nav-actions">
 
 
-{/* show user email */}
+{userName ? (
 
-{user && (
+<div className="user-menu" ref={menuRef}>
 
-<span className="nav-user">
+<div
+className="nav-user"
+onClick={()=>setOpen(!open)}
+>
 
-👤 {user.name}
+👤 {userName}
 
-</span>
+</div>
+
+
+
+{open && (
+
+<div className="user-dropdown">
+
+<div onClick={()=>navigate("/profile")}>
+
+👤 View Profile
+
+</div>
+
+
+<div onClick={()=>navigate("/settings")}>
+
+⚙️ Settings
+
+</div>
+
+
+<hr/>
+
+
+<div onClick={logout}>
+
+🚪 Logout
+
+</div>
+
+
+</div>
 
 )}
 
+</div>
 
+) : (
 
-{/* login / logout */}
-
-{user ?
-
-<button
-className="nav-cta"
-onClick={logout}
->
-
-Logout
-
-</button>
-
-:
 
 <button
 className="nav-cta"
@@ -186,7 +240,9 @@ Login
 
 </button>
 
-}
+
+)}
+
 
 
 </div>
@@ -197,7 +253,7 @@ Login
 
 </header>
 
-);
+  );
 
 }
 

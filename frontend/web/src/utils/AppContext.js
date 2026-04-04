@@ -1,41 +1,33 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 
 export const AppContext = createContext();
 
-export function AppProvider({children}){
+export function AppProvider({ children }) {
 
-const [plan,setPlan] = useState("Basic");
+  const [plan, setPlan] = useState("Basic");
+  const [premium, setPremium] = useState(20); // ✅ NEW STATE
 
-const premiumMap = {
+  const premiumMap = {
+    Basic: 20,
+    Moderate: 30,
+    Premium: 50
+  };
 
-Basic:20,
+  // ✅ Auto update premium when plan changes
+  useEffect(() => {
+    setPremium(premiumMap[plan] || 0);
+  }, [plan]);
 
-Moderate:30,
-
-Premium:50
-
-};
-
-return(
-
-<AppContext.Provider
-
-value={{
-
-plan,
-
-setPlan,
-
-premium: premiumMap[plan]
-
-}}
-
->
-
-{children}
-
-</AppContext.Provider>
-
-);
-
+  return (
+    <AppContext.Provider
+      value={{
+        plan,
+        setPlan,
+        premium,
+        setPremium   // ✅ FIXED (no more error)
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
 }

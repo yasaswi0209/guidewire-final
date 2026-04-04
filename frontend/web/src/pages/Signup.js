@@ -6,12 +6,11 @@ import axios from "axios";
 function Signup(){
 
   const navigate = useNavigate();
-
+  const [message, setMessage] = useState("");
   const [name,setName] = useState("");
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
 
-  // ✅ NEW STATES
   const [platform,setPlatform] = useState("");
   const [location,setLocation] = useState("");
   const [income,setIncome] = useState("");
@@ -24,35 +23,56 @@ function Signup(){
     }
 
     try{
+
       const res = await axios.post(
         "http://localhost:8000/auth/signup",
         {
-          name: name,
-          email: email,
-          password: password,
-
-          // ✅ SEND EXTRA DATA
-          platform: platform,
-          location: location,
+          name,
+          email,
+          password,
+          platform,
+          location,
           weekly_income: Number(income)
         }
       );
 
-      console.log(res.data);
+      console.log("Signup response:", res.data);
+
+      // 🚨 CHECK TOKEN
+      if(!res.data.access_token){
+        alert("Token not received from server ❌");
+        return;
+      }
+
+      // 🔥 SAVE TOKEN
+      localStorage.setItem("token", res.data.access_token);
+
+      // 🔥 FETCH USER FROM BACKEND
+      const userRes = await axios.get(
+        "http://127.0.0.1:8000/auth/me",
+        {
+          headers: {
+            Authorization: `Bearer ${res.data.access_token}`
+          }
+        }
+      );
+
+      // 🔥 SAVE USER (ONLY ONCE)
+      localStorage.setItem("user", JSON.stringify(userRes.data));
 
       alert("Signup Successful 🎉");
 
-      localStorage.setItem("user", JSON.stringify({
-  name: name,
-  email: email
-}));
-localStorage.setItem("city", location);
-
-      navigate("/dashboard");
+      // ✅ FIXED REDIRECT
+      navigate("/payment-setup");
 
     }catch(err){
-      console.error(err);
-      alert("Signup failed ❌");
+      console.error("Signup error:", err);
+
+      if(err.response){
+        setMessage(err.response.data.detail || "Signup failed ❌");
+      }else{
+        alert("Server not reachable ❌");
+      }
     }
 
   }
@@ -72,7 +92,7 @@ localStorage.setItem("city", location);
 
           <p>
             AI powered insurance for gig workers.
-            Instant claim settlement.
+            Instant protection against disruption.
           </p>
 
           <img
@@ -84,14 +104,14 @@ localStorage.setItem("city", location);
 
         {/* RIGHT */}
         <motion.form
-  className="auth-box"
-  initial={{opacity:0, y:20}}
-  animate={{opacity:1, y:0}}
-  onSubmit={(e)=>{
-    e.preventDefault();   // ✅ prevents duplicate calls
-    handleSignup();
-  }}
->
+          className="auth-box"
+          initial={{opacity:0, y:20}}
+          animate={{opacity:1, y:0}}
+          onSubmit={(e)=>{
+            e.preventDefault();
+            handleSignup();
+          }}
+        >
 
           <h2 className="auth-title">
             Create Account
@@ -101,7 +121,6 @@ localStorage.setItem("city", location);
             Join GigShield AI protection
           </p>
 
-          {/* BASIC INFO */}
           <input
             className="input"
             placeholder="Full Name"
@@ -124,9 +143,6 @@ localStorage.setItem("city", location);
             onChange={(e)=>setPassword(e.target.value)}
           />
 
-          {/* ✅ NEW FIELDS */}
-
-          {/* Platform Dropdown */}
           <select
             className="input"
             value={platform}
@@ -135,10 +151,8 @@ localStorage.setItem("city", location);
             <option value="">Select Platform</option>
             <option value="Zomato">Zomato</option>
             <option value="Swiggy">Swiggy</option>
-            
           </select>
 
-          {/* Location */}
           <input
             className="input"
             placeholder="Work Location (City)"
@@ -146,7 +160,6 @@ localStorage.setItem("city", location);
             onChange={(e)=>setLocation(e.target.value)}
           />
 
-          {/* Weekly Income */}
           <input
             className="input"
             type="number"
@@ -156,8 +169,8 @@ localStorage.setItem("city", location);
           />
 
           <button type="submit" className="btn-primary">
-  Signup
-</button>
+            Signup
+          </button>
 
           <p className="muted">
             Already have account?
@@ -171,7 +184,7 @@ localStorage.setItem("city", location);
 
           </p>
 
-        </motion.form> ✅
+        </motion.form>
 
       </div>
 

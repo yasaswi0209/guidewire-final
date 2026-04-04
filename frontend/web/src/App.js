@@ -18,10 +18,11 @@ import Policy from "./pages/Policy";
 import Claims from "./pages/Claims";
 import RiskAnalysis from "./pages/RiskAnalysis";
 import PoolDetails from "./pages/PoolDetails";
-
+import { AuthProvider } from "./pages/AuthContext";
 import { AppProvider } from "./utils/AppContext";
-
-
+import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import PaymentSetup from "./pages/PaymentSetup";
 function AppWrapper(){
 
 const location = useLocation();
@@ -41,16 +42,21 @@ return(
 <Route path="/" element={<Home/>} />
 
 <Route path="/login" element={<Login/>} />
-
+<Route path="/payment-setup" element={<PaymentSetup />} />
 <Route path="/signup" element={<Signup/>} />
-
-
+<Route path="/settings" element={<Settings />} />
+<Route path="/profile" element={<Profile/>}/>
 {/* PROTECTED */}
 
 <Route path="/dashboard" element={
 <ProtectedRoute>
 <Dashboard/>
 </ProtectedRoute>
+} />
+<Route path="/profile" element={
+  <ProtectedRoute>
+    <Profile/>
+  </ProtectedRoute>
 } />
 
 <Route path="/policy" element={
@@ -98,19 +104,14 @@ return(
 function App(){
 
 return(
-
-<BrowserRouter>
-
-<AppProvider>
-
-<AppWrapper/>
-
-</AppProvider>
-
-</BrowserRouter>
-
-)
-
+    <BrowserRouter>
+      <AuthProvider>   {/* ✅ FIXED POSITION */}
+        <AppProvider>
+          <AppWrapper/>
+        </AppProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  )
 }
 
 export default App;

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-
+import deliveryImg from "../assets/delivery.png";
 function Home(){
 
 const navigate = useNavigate();
@@ -10,30 +10,23 @@ return(
 
 <div className="scene-layout scene-0-layout">
 
-
-{/* LEFT CONTENT */}
+{/* LEFT */}
 
 <div>
 
 <p className="scene-label">
-
 FOR GIG WORKERS
-
 </p>
-
 
 
 <h1 className="scene-headline">
 
 Protect Your
 <span className="headline-accent">
-
  Daily Income
-
 </span>
 
 </h1>
-
 
 
 <p className="scene-sub">
@@ -70,98 +63,47 @@ See Dashboard
 
 
 
-{/* TRUST */}
-
-<div className="trust-badges">
-
-<div className="trust-badge">
-
-<span className="badge-num">
-
-2.4L+
-
-</span>
-
-<span className="badge-label">
-
-Workers Protected
-
-</span>
-
-</div>
-
-
-<div className="trust-divider"></div>
-
-
-<div className="trust-badge">
-
-<span className="badge-num">
-
-₹18Cr+
-
-</span>
-
-<span className="badge-label">
-
-Claims Paid
-
-</span>
-
-</div>
-
-
-<div className="trust-divider"></div>
-
-
-<div className="trust-badge">
-
-<span className="badge-num">
-
-99.1%
-
-</span>
-
-<span className="badge-label">
-
-AI Accuracy
-
-</span>
-
-</div>
-
-</div>
-
-
-
 {/* FEATURES */}
 
 <div className="mini-features">
 
-
-<div className="mini-feature">
-
+<div className="mini-feature blue-pill">
 🌧 Weather protection
-
 </div>
 
-
-<div className="mini-feature">
-
+<div className="mini-feature orange-pill">
 🤖 AI fraud detection
+</div>
+
+<div className="mini-feature green-pill">
+⚡️ instant UPI payout
+</div>
 
 </div>
 
 
-<div className="mini-feature">
 
-⚡ instant UPI payout
+{/* HOW IT WORKS */}
 
+<div className="mini-features more-features">
+
+<div className="mini-feature blue-pill">
+📍 Detect risk
 </div>
 
-
+<div className="mini-feature orange-pill">
+🤖 Predict impact
 </div>
 
+<div className="mini-feature green-pill">
+💰 Instant payout
+</div>
+
+<div className="mini-feature grey-pill">
+🛡 Stay protected
+</div>
+
+</div>
 
 
 </div>
@@ -172,15 +114,9 @@ AI Accuracy
 
 <div className="rider-illustration">
 
-<img
-src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png"
-width="340"
-alt="delivery bike"
-/>
+<img src={deliveryImg} alt="Delivery Workers" className="home-img" />
 
 </div>
-
-
 
 </div>
 

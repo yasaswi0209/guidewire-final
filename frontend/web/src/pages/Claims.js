@@ -1,20 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-
-
-const history = [
-
-{ type:"Rain", payout:310, date:"12 Mar" },
-
-{ type:"Heat", payout:420, date:"3 Mar" },
-
-{ type:"Pollution", payout:180, date:"25 Feb" }
-
-];
-
+import axios from "axios";
 
 function Claims(){
 
+const [payment, setPayment] = useState("");
 const [selected,setSelected] = useState("");
 const [open,setOpen] = useState(false);
 const [status,setStatus] = useState("");
@@ -22,138 +12,157 @@ const [payout,setPayout] = useState(null);
 const [reason,setReason] = useState("");
 const [confidence,setConfidence] = useState(null);
 const [risk,setRisk] = useState(null);
+const [paymentDetails, setPaymentDetails] = useState(null);
+const [userPayment, setUserPayment] = useState(null);
+const [fraudReason, setFraudReason] = useState("");
+const [recentClaims, setRecentClaims] = useState([]);
+const [alertMsg, setAlertMsg] = useState("");
 
+// ✅ ADD THIS FUNCTION HERE
+function downloadReceipt(){
+
+const content = `
+Claim Receipt
+-------------------------
+Amount: ₹${payout}
+Reason: ${reason}
+UPI: ${userPayment?.upi}
+Time: ${paymentDetails?.time}
+Transaction ID: ${paymentDetails?.id}
+`;
+
+const blob = new Blob([content], { type: "text/plain" });
+const url = window.URL.createObjectURL(blob);
+
+const a = document.createElement("a");
+a.href = url;
+a.download = "claim_receipt.txt";
+a.click();
+}
 const dropdownRef = useRef();
 
-
 const options = [
-
 { value:"rain", label:"🌧 Heavy Rain" },
-
 { value:"pollution", label:"🌫 High Pollution" },
-
 { value:"heat", label:"🔥 Extreme Heat" },
-
 { value:"curfew", label:"🚫 Curfew" }
-
 ];
 
 
-
-/* close dropdown outside click */
-
+// 🔥 CLOSE DROPDOWN
 useEffect(()=>{
-
 function close(e){
-
-if(
-dropdownRef.current &&
-!dropdownRef.current.contains(e.target)
-){
-
+if(dropdownRef.current && !dropdownRef.current.contains(e.target)){
 setOpen(false);
-
 }
-
 }
-
 document.addEventListener("mousedown",close);
-
 return ()=>document.removeEventListener("mousedown",close);
-
 },[]);
 
 
-
-/* auto suggestion */
-
+// 🔥 AUTO SELECT RAIN
 useEffect(()=>{
-
-setTimeout(()=>{
-
-setSelected("rain");
-
-},700);
-
+setTimeout(()=>{ setSelected("rain"); },700);
 },[]);
 
 
+// 🔥 FETCH USER PAYMENT
+useEffect(() => {
+const user = JSON.parse(localStorage.getItem("user"));
 
-function handleApply(){
-
-if(!selected){
-
-setStatus("rejected");
-
-setReason("Select disruption");
-
-return;
-
+if(user?.id){
+axios.get(`http://127.0.0.1:8000/settings/${user.id}`)
+.then(res => setUserPayment(res.data))
+.catch(err => console.error(err));
 }
-
-setStatus("verifying");
-
-setPayout(null);
-
-setConfidence(null);
+}, []);
 
 
-
-setTimeout(()=>{
-
-const weeklyIncome = 4200;
-
-const hourlyIncome = (weeklyIncome/7)/8;
-
-let hoursLost = 0;
-
-let msg = "";
-let conf = 0.9;
+// 🔥 FETCH RECENT CLAIMS (FIXED)
+useEffect(() => {
+axios.get("http://127.0.0.1:8000/claims/recent")
+.then(res => setRecentClaims(res.data))
+.catch(err => console.error(err));
+}, []);
 
 
-
-switch(selected){
-
-case "rain":
-hoursLost = 3;
-msg="Rain disruption verified";
-conf=0.94;
-break;
-
-case "pollution":
-hoursLost = 2;
-msg="Pollution disruption verified";
-conf=0.88;
-break;
-
-case "heat":
-hoursLost = 4;
-msg="Heat disruption verified";
-conf=0.92;
-break;
-
-default:
-setStatus("rejected");
-setRisk("high");
-return;
-
+// 🔥 AUTO CLAIM TRIGGER
+useEffect(() => {
+if(selected){
+autoTriggerClaim();
 }
+}, [selected]);
 
 
+async function autoTriggerClaim(){
+try{
 
-const loss = Math.round(hourlyIncome*hoursLost*2);
+const user = JSON.parse(localStorage.getItem("user"));
 
-setReason(msg);
-setPayout(loss);
-setConfidence(Math.round(conf*100));
-setRisk(conf>0.9 ? "low":"medium");
+const city = localStorage.getItem("city") || "Hyderabad";
+
+// 🌦️ GET LIVE WEATHER
+const weatherRes = await axios.get(
+  `http://127.0.0.1:8000/claims/weather/${city}`
+);
+
+// 🚀 AUTO CLAIM
+const res = await axios.post("http://127.0.0.1:8000/claims/auto", {
+  user_id: user?.id,
+  city: city,
+  trigger: selected
+});
+
+const data = res.data;
+
+setReason(data.reason || data.message);
+setPayout(data.amount || 0);
+setPayment(data.payment_status);
+setPaymentDetails(data.payment);
+setFraudReason(data.fraud_reason || "Valid claim");
+setConfidence(95);
+
+if(data.status === "approved"){
+
+setAlertMsg("💸 ₹" + data.amount + " sent to your UPI");
 
 setStatus("approved");
 
-},1400);
+if(data.risk_score < 0.4){
+setRisk("low");
+} else if(data.risk_score < 0.7){
+setRisk("medium");
+} else {
+setRisk("high");
+}
 
 }
 
+}catch(err){
+console.error(err);
+setStatus("rejected");
+setReason("Server error");
+}
+}
+
+
+// 🔘 MANUAL BUTTON
+async function handleApply(){
+
+if(!selected){
+setStatus("rejected");
+setReason("Select disruption");
+return;
+}
+
+// 🔥 show loading animation
+setStatus("verifying");
+
+// 🔥 trigger claim (same as auto but manual)
+await autoTriggerClaim();
+
+}
 
 
 return(
@@ -162,287 +171,160 @@ return(
 
 <div className="scene-layout scene-2-layout">
 
-
-
-{/* LEFT SIDE */}
-
+{/* LEFT */}
 <div className="claims-left">
 
+<motion.div className="dashboard-panel">
 
-<motion.div
-className="dashboard-panel"
-initial={{opacity:0}}
-animate={{opacity:1}}
->
-
-<h3 className="dp-title">
-AI Claim Engine
-</h3>
-
-
+<h3 className="dp-title">AI Claim Engine</h3>
 
 <div className="workflow-box">
-
 <WorkflowStep label="Submit" active/>
-
-<WorkflowStep
-label="AI Review"
-active={status==="verifying"}
-/>
-
-<WorkflowStep
-label="Payout"
-active={status==="approved"}
-/>
-
+<WorkflowStep label="AI Review" active={status==="verifying"}/>
+<WorkflowStep label="Payout" active={status==="approved"}/>
 </div>
-
-
 
 <div className="ai-suggestion">
-
-AI detected disruption:
-<b> 🌧 Heavy Rain</b>
-
+AI detected disruption: <b>🌧 Heavy Rain</b>
 </div>
 
+<div ref={dropdownRef} className="dropdown-box">
 
+<label>Confirm disruption</label>
 
-<div
-ref={dropdownRef}
-className="dropdown-box"
->
-
-<label>
-Confirm disruption
-</label>
-
-
-
-<div
-className="dropdown"
-onClick={()=>setOpen(!open)}
->
-
+<div className="dropdown" onClick={()=>setOpen(!open)}>
 <span>
-
-{selected
-
-? options.find(o=>o.value===selected)?.label
-
-: "Choose disruption"}
-
+{selected ? options.find(o=>o.value===selected)?.label : "Choose disruption"}
 </span>
-
 <span>▾</span>
-
 </div>
-
-
 
 {open && (
-
-<motion.div
-className="dropdown-list"
-initial={{opacity:0}}
-animate={{opacity:1}}
->
-
+<div className="dropdown-list">
 {options.map(opt=>(
-
-<div
-key={opt.value}
+<div key={opt.value}
 className="dropdown-item"
 onClick={()=>{
-
 setSelected(opt.value);
 setOpen(false);
-
-}}
->
-
+}}>
 {opt.label}
-
 </div>
-
 ))}
-
-</motion.div>
-
+</div>
 )}
 
 </div>
 
-
-
-<motion.button
-className="btn"
-onClick={handleApply}
-whileHover={{scale:1.05}}
->
-
-Check Eligibility
-
-</motion.button>
-
-
+<button className="btn" onClick={handleApply}>
+⚡ Auto Claim Now
+</button>
 
 </motion.div>
 
 
+{/* 🔥 RECENT CLAIMS (FIXED) */}
+<motion.div className="dashboard-panel">
+<h3 className="dp-title">Recent Claims</h3>
 
-{/* HISTORY */}
-
-<motion.div
-className="dashboard-panel"
-initial={{opacity:0}}
-animate={{opacity:1}}
->
-
-<h3 className="dp-title">
-Recent Claims
-</h3>
-
-
-
-{history.map((h,i)=>(
-
-<div
-key={i}
-className="claim-history-item"
->
-
-<span>{h.type}</span>
-
-<span>₹{h.payout}</span>
-
-<span className="muted">{h.date}</span>
-
+{recentClaims.map((c,i)=>(
+<div key={i} className="claim-history-item">
+<span>{c.type}</span>
+<span>₹{c.amount}</span>
+<span className="muted">{c.date}</span>
 </div>
-
 ))}
 
-
-
 </motion.div>
-
 
 </div>
 
 
-
-{/* RIGHT SIDE */}
-
+{/* RIGHT */}
 <div className="claims-right">
 
-<motion.div
-className="dashboard-panel decision-panel"
-initial={{opacity:0}}
-animate={{opacity:1}}
->
+<motion.div className="dashboard-panel decision-panel">
 
-<h3 className="dp-title">
-AI Decision
-</h3>
+<h3 className="dp-title">AI Decision</h3>
 
-
-
-{status==="" && (
-
-<p className="muted">
-
-Select disruption to estimate payout.
-
-</p>
-
-)}
-
-
+{status==="" && <p>Auto-detecting disruption...</p>}
 
 {status==="verifying" && (
-
 <div className="status-card warn">
-
-🤖 analysing weather & demand signals...
-
+🤖 analysing weather & demand...
 </div>
-
 )}
-
-
 
 {status==="approved" && (
+<div className="status-card success">
 
-<motion.div
-className="status-card success payout-card"
-initial={{scale:0.9}}
-animate={{scale:1}}
->
+<div className="decision-row">
 
+{/* LEFT */}
+<div className="decision-left">
+<p className="auto-tag">⚡ Auto Claim Triggered</p>
 <h3>{reason}</h3>
+</div>
 
+{/* CENTER */}
+<div className="decision-center">
 <h1>₹{payout}</h1>
-
 <p>AI confidence {confidence}%</p>
+</div>
 
-<p className={`risk-pill ${risk}`}>
-risk level {risk}
-</p>
+{/* RIGHT */}
+<div className="decision-right">
 
-<p>sent instantly via UPI</p>
+<p><b>Risk:</b> {risk}</p>
+<p><b>Decision:</b> {fraudReason}</p>
+<p>{payment==="success" ? "✅ Paid" : "❌ Failed"}</p>
 
-</motion.div>
-
+{/* 🔥 MOVE PAYMENT DETAILS INSIDE HERE */}
+{paymentDetails && (
+<div className="mini-box">
+<p><b>Time:</b> {paymentDetails.time}</p>
+<p><b>Transaction ID:</b> {paymentDetails?.id}</p>
+</div>
 )}
 
+</div>
 
+</div>
+
+
+<button onClick={downloadReceipt} className="btn">
+🧾 Download Receipt
+</button>
+
+</div>
+)}
 
 {status==="rejected" && (
-
 <div className="status-card danger">
-
-claim not eligible
-
+<h3>❌ Claim Rejected</h3>
+<p>{reason}</p>
+<p>₹{payout}</p>
 </div>
-
 )}
-
-
 
 </motion.div>
 
 </div>
-
-
 
 </div>
 
 </section>
-
-)
-
+);
 }
 
-
-
-/* workflow component */
 
 function WorkflowStep({label,active}){
-
 return(
-
 <div className={`workflow-step ${active?"active":""}`}>
-
 <div className="dot"/>
-
 {label}
-
 </div>
-
-)
-
+);
 }
-
-
 
 export default Claims;

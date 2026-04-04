@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-
+import axios from "axios";
 import {
 LineChart,
 Line,
@@ -31,12 +31,7 @@ const history = [
 
 /* simulated live data */
 
-const liveData = {
-
-weather:"rain",
-aqi:165
-
-};
+;
 
 
 function RiskAnalysis(){
@@ -65,16 +60,41 @@ const options = [
 
 /* simulate auto detection */
 
-useEffect(()=>{
+useEffect(() => {
+  async function fetchLiveData() {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+    const city = user?.city || "Hyderabad";
 
-setTimeout(()=>{
+      const res = await axios.get(
+        `http://127.0.0.1:8000/claims/weather/${city}`
+      );
 
-setWeather(liveData.weather);
-setPollution(liveData.aqi);
+      const data = res.data;
 
-},800);
+      const condition = data.condition.toLowerCase();
 
-},[]);
+if (condition.includes("rain")) {
+  setWeather("rain");
+} else if (condition.includes("clear")) {
+  setWeather("normal");
+} else {
+  setWeather("heat");
+}
+
+setPollution(data.aqi);
+
+      
+
+    } catch (err) {
+      console.error("API error:", err);
+    }
+  }
+
+  fetchLiveData();
+}, []);
+
+
 
 
 
@@ -91,55 +111,34 @@ return;
 setStatus("analyzing");
 
 
-setTimeout(()=>{
+async function calculateRisk(){
 
-let level="";
-let reasonText="";
+  if(!weather || !pollution){
+    setRisk("Error");
+    setReason("Missing input");
+    return;
+  }
 
+  setStatus("analyzing");
 
+  try {
+    const res = await axios.post(
+      "http://127.0.0.1:8000/claims/risk",
+      {
+        weather: weather,
+        aqi: Number(pollution)
+      }
+    );
 
+    setRisk(res.data.risk);
+    setReason(res.data.reason);
+    setStatus("done");
 
-if(weather==="rain" && pollution>150){
-
-level="High";
-reasonText="Rain + poor air quality";
-
+  } catch (err) {
+    console.error(err);
+    setStatus("");
+  }
 }
-
-else if(weather==="rain"){
-
-level="Medium";
-reasonText="Rain disruption possible";
-
-}
-
-else if(weather==="heat"){
-
-level="Medium";
-reasonText="Extreme heat fatigue";
-
-}
-
-else if(pollution>150){
-
-level="High";
-reasonText="Severe pollution";
-
-}
-
-else{
-
-level="Low";
-reasonText="Normal environment";
-
-}
-
-
-setRisk(level);
-setReason(reasonText);
-setStatus("done");
-
-},1200);
 
 }
 
@@ -193,12 +192,7 @@ Environment Inputs
 
 
 
-<div className="ai-suggestion">
 
-AI detected:
-<b> 🌧 Rain</b> | AQI <b>{pollution}</b>
-
-</div>
 
 
 
