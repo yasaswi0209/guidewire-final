@@ -1,10 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.sql import func
-from app.db.session import Base
 from fastapi import APIRouter
 
 router = APIRouter()
 
+# ✅ SAFE ROUTE (NO DB)
 @router.get("/insurance/me")
 def get_user_policy():
     return {
@@ -13,26 +11,9 @@ def get_user_policy():
         "weekly_premium": 23.6
     }
 
-
-class Insurance(Base):
-    __tablename__ = "insurance"
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    # 🔗 User relation
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
-    # 📦 Plan details
-    plan_name = Column(String, nullable=False)
-    premium = Column(Integer, nullable=False)   # 💰 weekly price
-    coverage = Column(Integer, nullable=False)  # 🛡️ coverage amount
-
-    # 📊 Status
-    status = Column(String, default="ACTIVE")
-
-    # 🔒 Lock system (VERY IMPORTANT)
-    locked_until = Column(DateTime, nullable=True)
-
-    # 🕒 Optional (good for tracking)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+# ✅ MATCH FRONTEND (IMPORTANT → POST, not GET)
+@router.post("/insurance/upgrade")
+def upgrade_plan(plan: str):
+    return {
+        "message": f"{plan} plan activated 🎉"
+    }
