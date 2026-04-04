@@ -1,4 +1,6 @@
-print("🔥 STEP 0 - MAIN START")
+from fastapi.middleware.cors import CORSMiddleware
+
+
 
 from fastapi import FastAPI
 app = FastAPI()
@@ -10,6 +12,13 @@ try:
     print("✅ Routes imported")
 except Exception as e:
     print("❌ ROUTE IMPORT ERROR:", e)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # later restrict
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ✅ DB
 try:
