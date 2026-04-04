@@ -15,8 +15,8 @@ export function AppProvider({ children }) {
 
   // ✅ Auto update premium when plan changes
   useEffect(() => {
-    setPremium(premiumMap[plan] || 0);
-  }, [plan]);
+  setPremium(premiumMap[plan] || 0);
+}, [plan, premiumMap]);
 
   return (
     <AppContext.Provider
