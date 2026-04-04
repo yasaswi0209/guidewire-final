@@ -1,11 +1,22 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+import os
 
-# ✅ DATABASE URL
-DATABASE_URL = "postgresql+psycopg2://postgres:0209@127.0.0.1:5432/ai"
+# ✅ GET FROM RENDER ENV
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# ✅ ENGINE
-engine = create_engine(DATABASE_URL)
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set")
+
+# ✅ FIX postgres:// issue (Render uses this sometimes)
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# ✅ ENGINE WITH SSL (RENDER NEEDS THIS)
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"sslmode": "require"}
+)
 
 # ✅ SESSION
 SessionLocal = sessionmaker(
@@ -14,9 +25,8 @@ SessionLocal = sessionmaker(
     bind=engine
 )
 
-# ✅ BASE (DEFINE ONLY HERE)
+# ✅ BASE
 Base = declarative_base()
-
 
 # ✅ DEPENDENCY
 def get_db():
