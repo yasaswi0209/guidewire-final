@@ -2,14 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-
+from datetime import timedelta
+from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.core.security import verify_password, create_access_token, hash_password
 
 router = APIRouter()
+@router.get("/me")
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
 
-# ✅ SIMPLE USER SCHEMA
+# ✅ USER SCHEMA
 class UserCreate(BaseModel):
     name: str
     email: str
@@ -18,8 +22,8 @@ class UserCreate(BaseModel):
     location: str
     weekly_income: float
 
-# 🔐 SIGNUP (SIMPLIFIED)
-@router.post("/signup")
+
+# 🔐 SIGNUP (FIXED + TOKEN)
 @router.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
 
@@ -40,30 +44,24 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {"message": "User created successfully"}
+    # 🔥 CREATE TOKEN
+    access_token = create_access_token(
+        {"sub": new_user.email},
+        timedelta(hours=24)
+    )
 
-    existing_user = db.query(User).filter(User.email == data.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
-
-    new_user = User(
-    name=data.name,
-    email=data.email,
-    password=hash_password(data.password),
-    platform=data.platform,
-    location=data.location,
-    weekly_income=data.weekly_income
-)
-
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    return {"message": "User created successfully"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "name": new_user.name,
+            "email": new_user.email,
+            "location": new_user.location
+        }
+    }
 
 
-# 🔐 LOGIN (same as before)
-@router.post("/login")
+# 🔐 LOGIN
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
@@ -75,10 +73,17 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not verify_password(form_data.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": db_user.email})
+    access_token = create_access_token(
+        {"sub": db_user.email},
+        timedelta(hours=24)
+    )
 
     return {
-        "access_token": token,
+        "access_token": access_token,
         "token_type": "bearer",
-        "name": db_user.name   # ✅ THIS LINE IS IMPORTANT
+        "user": {
+            "name": db_user.name,
+            "email": db_user.email,
+            "location": db_user.location
+        }
     }

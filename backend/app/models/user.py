@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from app.db.base import Base
+from app.db.session import Base   
 class User(Base):
     __tablename__ = "users"
 
@@ -13,3 +13,6 @@ class User(Base):
     platform = Column(String, nullable=False)
     location = Column(String, nullable=False)
     weekly_income = Column(Integer, nullable=False)
+    phone = Column(String)
+    upi = Column(String)
+    bank_name = Column(String)

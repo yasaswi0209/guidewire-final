@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, Float, String
-from app.core.database import Base
-
+from app.db.session import Base
 class Payout(Base):
     __tablename__ = "payouts"
 

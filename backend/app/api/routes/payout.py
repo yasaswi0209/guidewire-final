@@ -1,36 +1,46 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.db.session import get_db
-from app.models.payout import Payout
+
+from app.db.session import SessionLocal
 from app.models.user import User
-from app.models.community_pool import CommunityPool
-from app.services.pool_service import deduct_from_pool
+from app.services.payout_service import check_and_trigger_payout
+from app.services.prediction_service import calculate_premium
 
 router = APIRouter()
 
-@router.post("/{user_id}")
-def process_payout(user_id: int, db: Session = Depends(get_db)):
-    
+
+# ✅ DB Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# 🚀 PAYOUT API
+@router.get("/payout/{user_id}")
+def payout(user_id: int, db: Session = Depends(get_db)):
+
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        return {"error": "User not found"}
 
-    payout_amount = 200  # dummy logic
+    location = user.location  # ✅ correct field
 
-    success = deduct_from_pool(db, user.zone, payout_amount)
+    return check_and_trigger_payout(location)
 
-    if not success:
-        raise HTTPException(status_code=400, detail="Insufficient pool funds")
 
-    payout = Payout(
-        user_id=user.id,
-        amount=payout_amount,
-        reason="Rain disruption"
-    )
+# 💰 PREMIUM API
+@router.get("/premium/{user_id}")
+def premium(user_id: int, db: Session = Depends(get_db)):
 
-    db.add(payout)
-    db.commit()
-    db.refresh(payout)
+    user = db.query(User).filter(User.id == user_id).first()
 
-    return {"message": "Payout processed", "amount": payout_amount}
+    if not user:
+        return {"error": "User not found"}
+
+    location = user.location
+
+    return calculate_premium(location)

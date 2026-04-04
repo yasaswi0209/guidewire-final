@@ -1,3 +1,6 @@
+from app.db.session import Base
 
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+from app.models.user import User
+from app.models.claim import Claim
+from app.models.insurance import Insurance
+from app.models.payout import Payout

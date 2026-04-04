@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import risk   # ✅ ADD THIS
 from app.db.base import Base
 from app.db.session import engine
+from app.api.routes import claim
+from app.api.routes import payout
+from app.api.routes import settings
+
+
 
 # ✅ Load models
 from app.models.user import User
@@ -16,7 +21,7 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origin_regex=".*",   # ✅ allows ALL origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,10 +32,13 @@ Base.metadata.create_all(bind=engine)
 
 # ✅ Routes
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(insurance.router, prefix="/insurance", tags=["Insurance"])
+app.include_router(insurance.router)
 app.include_router(risk.router, prefix="/risk", tags=["Risk"])
+app.include_router(claim.router)
+app.include_router(payout.router, tags=["Payout"])
 
 
+app.include_router(settings.router)
 @app.get("/")
 def root():
     return {"message": "Backend running 🚀"}
