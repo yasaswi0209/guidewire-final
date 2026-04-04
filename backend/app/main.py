@@ -17,7 +17,9 @@ except Exception as e:
     print("❌ ROUTE IMPORT ERROR:", e)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # later restrict
+    allow_origins=[
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
