@@ -1,8 +1,17 @@
+import os
 import joblib
 from app.utils.weather_api import get_weather_data, get_aqi_data
 
-# 🔥 Load ML model
-model = joblib.load("app/ml/premium_model.pkl")
+# 🔥 Safe path (IMPORTANT)
+BASE_DIR = os.path.dirname(__file__)
+model_path = os.path.join(BASE_DIR, "premium_model.pkl")
+
+model = joblib.load(model_path)
+try:
+    model = joblib.load(model_path)
+except Exception as e:
+    print("MODEL LOAD ERROR:", e)
+    model = None
 
 
 def calculate_premium(city: str):
@@ -16,7 +25,10 @@ def calculate_premium(city: str):
     rain = weather.get("rain", 0)
 
     # 🤖 ML prediction
-    risk_score = float(model.predict([[aqi, temp, rain, humidity]])[0])
+    if model is None:
+        risk_score = 0.5  # safe default
+    else:
+        risk_score = float(model.predict([[aqi, temp, rain, humidity]])[0])
 
     # 🔥 Convert to safe probability
     trigger_prob = max(0.1, min(risk_score, 0.9))
