@@ -4,8 +4,17 @@ sqlalchemy
 psycopg2-binary
 pydantic
 python-jose
-joblib
-python-multipart
 passlib[bcrypt]
+python-multipart
+
+# ML / Data
+scikit-learn
+pandas
+numpy
+joblib
+
+# APIs
 requests
+
+# Payments
 razorpay
