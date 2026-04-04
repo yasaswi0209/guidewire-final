@@ -10,7 +10,7 @@ app.add_middleware(
         "http://localhost:3000",
         "https://guidewire-final.vercel.app",  # ✅ ADD THIS
     ],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
