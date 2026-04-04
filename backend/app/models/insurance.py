@@ -1,6 +1,17 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from app.db.session import Base
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/insurance/me")
+def get_user_policy():
+    return {
+        "plan": "Basic",
+        "status": "active",
+        "weekly_premium": 23.6
+    }
 
 
 class Insurance(Base):
